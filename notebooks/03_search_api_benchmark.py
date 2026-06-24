@@ -15,6 +15,7 @@
 
 # %%
 import _setup  # noqa: F401
+import sys
 import statistics
 import subprocess
 import time
@@ -31,13 +32,15 @@ import httpx
 # %%
 ROOT = Path(_setup.__file__).resolve().parent.parent
 proc = subprocess.Popen(
-    ["uvicorn", "app.main:app", "--port", "8000", "--log-level", "warning"],
+    [sys.executable, "-m", "uvicorn", "app.main:app", "--port", "8000", "--log-level", "warning"],
     cwd=str(ROOT),
 )
 
 # Đợi server up + warm (Searcher.from_corpus loads embeddings + indexes 1000 docs)
 URL = "http://localhost:8000"
-for _ in range(60):
+for _ in range(180):
+    if proc.poll() is not None:
+        raise RuntimeError(f"API process exited early with code {proc.returncode}")
     try:
         r = httpx.get(f"{URL}/healthz", timeout=2.0)
         if r.status_code == 200 and r.json().get("ready"):
@@ -46,7 +49,8 @@ for _ in range(60):
         pass
     time.sleep(1)
 else:
-    raise RuntimeError("API didn't become ready within 60s")
+    proc.terminate()
+    raise RuntimeError("API didn't become ready within 180s")
 
 print(httpx.get(f"{URL}/healthz").json())
 

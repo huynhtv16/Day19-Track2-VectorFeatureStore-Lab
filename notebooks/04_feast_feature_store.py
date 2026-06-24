@@ -25,6 +25,7 @@ import polars as pl
 REPO_ROOT = Path(_setup.__file__).resolve().parent.parent
 FEAST_DIR = REPO_ROOT / "app" / "feast_repo"
 FEAST_DATA = FEAST_DIR / "data"
+FEAST_BIN = REPO_ROOT / ".venv" / "bin" / "feast"
 FEAST_DATA.mkdir(exist_ok=True)
 
 # %% [markdown]
@@ -84,7 +85,7 @@ for p in sorted(FEAST_DATA.glob("*.parquet")):
 
 # %%
 res = subprocess.run(
-    ["feast", "apply"],
+    [str(FEAST_BIN), "apply"],
     cwd=str(FEAST_DIR),
     capture_output=True, text=True, check=False,
 )
@@ -95,6 +96,15 @@ if res.stderr:
     print(res.stderr)
 assert res.returncode == 0, f"feast apply failed: {res.stderr}"
 
+res = subprocess.run(
+    [str(FEAST_BIN), "feature-views", "list"],
+    cwd=str(FEAST_DIR),
+    capture_output=True, text=True, check=False,
+)
+print("FEATURE VIEWS:")
+print(res.stdout)
+assert res.returncode == 0, f"feature-views list failed: {res.stderr}"
+
 # %% [markdown]
 # ## 3. `feast materialize-incremental` — load offline → online
 #
@@ -104,7 +114,7 @@ assert res.returncode == 0, f"feast apply failed: {res.stderr}"
 # %%
 end_dt = NOW.strftime("%Y-%m-%dT%H:%M:%S")
 res = subprocess.run(
-    ["feast", "materialize-incremental", end_dt],
+    [str(FEAST_BIN), "materialize-incremental", end_dt],
     cwd=str(FEAST_DIR),
     capture_output=True, text=True, check=False,
 )
@@ -185,7 +195,7 @@ else:
 import pandas as pd
 entity_df = pd.DataFrame({
     "user_id": ["u_001", "u_002", "u_003"],
-    "event_timestamp": [NOW - timedelta(hours=2), NOW - timedelta(hours=1), NOW],
+    "event_timestamp": [NOW, NOW, NOW],
 })
 
 historical = fs.get_historical_features(
