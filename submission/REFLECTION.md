@@ -1,7 +1,6 @@
 # Reflection — Lab 19
 
-**Tên:** Huynh
-**Cohort:** _Điền cohort của bạn_
+**Tên:** Tran Van Huynh
 **Path đã chạy:** lite
 
 ---
@@ -35,7 +34,3 @@ hai index cùng lúc.
 
 ---
 
-## Bonus challenge
-
-- [ ] Đã làm bonus (xem `bonus/`)
-- [ ] Pair work với: _<tên đồng đội nếu có>_
